@@ -1,0 +1,15 @@
+/config.ini
+/chromediver
+/erfen.csv
+/erfen.nl
+/FiltroERFEN.xlsx
+/H0136H0150.xlsx
+/ListadoEstacionesDPAParametrosDecimales.txt
+/.idea
+/venv
+/.venv
+/chromediver/
+/fromChrome/__pycache__
+/fromFirefox/__pycache__
+/process/__pycache__
+/utils/__pycache__

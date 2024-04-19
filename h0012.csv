@@ -1,0 +1,18 @@
+Dato	Detalle	Número de decimales	Cantidad de caracteres Pseudo binarios
+utc_h	Hora en UTC	0	3
+utc_m	Minuto en UTC	0	3
+utc_s	Segundo en UTC	0	3
+MTO	Estado de Mantenimiento	0	3
+cdt_log	Calidad de dato del Datalogger	0	3
+Max	Nivel máximo de agua de la hora	2	3
+status	Estado del sensor	0	3
+Min	Nivel mínimo del agua de la hora	2	3
+status	Estado del sensor	0	3
+Avg	Nivel promedio del agua de la hora	2	3
+status	Estado del sensor	0	3
+Dev	Desviación estándar del Nivel  del agua de la hora	3	3
+status	Estado del sensor	0	3
+Avg	Nivel promedio del agua del último minuto	2	3
+status	Estado del sensor	0	3
+External DC	Voltaje de batería	2	3
+cdt_log	Calidad de dato del Datalogger	0	3

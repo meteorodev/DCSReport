@@ -1,0 +1,40 @@
+nemonico;variable;orden;decimales
+29321h;Temperatura del aire Max;1;1
+293161h;Temperatura del aire Min;2;1
+29311h;Temperatura del aire Avg;3;1
+91161h;Humedad Relativa Max;4;0
+9111h;Humedad Relativa Min;5;0
+9121h;Humedad Relativa Avg;6;0
+18711h;Presión Atmosférica Max;7;1
+18721h;Presión Atmosférica Min;8;1
+18741h;Presión Atmosférica Avg;9;1
+171481h;Precipitación  Sum;10;1
+212021h;Radiación solar Global Max;11;1
+212041h;Radiación solar Global Min;12;1
+212011h;Radiación solar Global Avg;13;1
+212081h;Radiación solar Global Sum;14;1
+371111h;Velocidad Viento SpdMax;15;1
+371121h;Velocidad Viento SpdMin;16;1
+371141h;Velocidad Viento SpdAvg;17;1
+271081h;Recorrido Viento WRun;18;0
+4211h;Dirección Viento DirMax;19;0
+4221h;Dirección Viento DirAvg;20;0
+7611h;Hora de la Ráfaga GustH;21;0
+131311h;Minuto de la Ráfaga GustM;22;0
+32311h;Temperatura del suelo Max;23;1
+32321h;Temperatura del suelo Min;24;1
+32341h;Temperatura del suelo Avg;25;1
+171485m;Última Precipitación  Sum;26;1
+3919161h;Batería DC;27;2
+293321h;Temperatura del aire Dev;28;1
+91321h;Humedad Relativa Dev;29;1
+187321h;Presión Atmosférica Dev;30;1
+2120321h;Radiación solar Global Dev;31;1
+2220321h;Temperatura del suelo Dev;32;1
+131111h;Contenido Volumétrico de agua Max;33;1
+131121h;Contenido Volumétrico de agua Min;34;1
+131141h;Contenido Volumétrico de agua Avg;35;1
+1311321h;Contenido Volumétrico de agua Dev;36;1
+3711321h;Velocidad Viento Dev;37;1
+4221h;Dirección Viento Min;38;0
+42321h;Dirección Viento Dev;39;1
