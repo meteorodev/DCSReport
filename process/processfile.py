@@ -280,6 +280,8 @@ class ProcessDownloadFile(object):
             params = conf.get_cred(section="mongodb")
             cad = "mongodb://" + params['user'] + ":" + params['password'] + "@" + \
                   params['host'] + ":27017/" + params['database']
+            print("cadena de conexion se ve a continuacion ")
+            print(cad)
             #print(params['database'], " : ", params['collection'])
 
             client = pymongo.MongoClient(cad, 1000)
@@ -422,9 +424,12 @@ class ProcessDownloadFile(object):
                             transmission_state = 4
                             print("El mensaje tienen errores;", nesdis, ";id_est;", str(cod_inamhi), ";cod_inamhi;",
                                   pun_obs, error_time)
-                            # TODO implemntar la funcion que actualice el estado de transmicion en la base de datos
+
                         # transforma el campo de la fecha a fecha
-                    self.set_station_state(id_station=cod_inamhi, new_state=transmission_state)
+                    # ********
+                    # ********
+                    # Quitar este comentario
+                    # self.set_station_state(id_station=cod_inamhi, new_state=transmission_state)
                 # print(data.head(5))
 
 

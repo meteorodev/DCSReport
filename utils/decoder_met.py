@@ -6,7 +6,7 @@ from time import time
 class Msg_Met_Decoder():
 
     def decompileChar(self, segmen):
-        # print("original segmen test method : "+segmen)
+        #print("original segmen test method : "+segmen)
         if (segmen != "///"):
             binMerged = "00"
             for i in bytearray(segmen, encoding='utf-8'):
@@ -19,7 +19,7 @@ class Msg_Met_Decoder():
             for i in range(0, 20, step):
                 hexval = format(int(binMerged[i:i + step], 2), 'x')
                 hexMerged += hexval
-                # print(i, binMerged[i:i+step], hexval)
+                #print(segmen,i, binMerged[i:i+step], hexval)
             decVal = int(hexMerged, 16)
             #print("codificado -> ;", segmen, "; | bin -> ;", binMerged, "; | hex -> ;", hexMerged, "; | dec ->;", decVal)
             return decVal
@@ -27,11 +27,13 @@ class Msg_Met_Decoder():
             return -1
 
     def decomMesage(self, text2decomp):
+        print(text2decomp)
         message = []
         step = 3
         for i in range(0, len(text2decomp), step):
-            self.decompileChar(text2decomp[i:i + step])
-            message.append(self.decompileChar(text2decomp[i:i + step]))
+            val=self.decompileChar(text2decomp[i:i + step])
+            print(text2decomp[i:i + step], val)
+            message.append(val)
         return message
 
 
@@ -39,9 +41,9 @@ if __name__ == '__main__':
     #@TODO Para poder leer los mensajes primero se debe hacer un split para separar los dos mensajes
 
     dc = Msg_Met_Decoder()
-    msj1 = "@BA@BO@BF@AF@@?@ACAmBAl}Am@@@@@O[@Cm@EnBE@@CM@@r@AM///////////////////////////////////////////////////////////////@B?@Dh@A[@A_@@D@@m@U`"
-    msj2 = '@BP@A?@BF@AE@@?@ABAl~AlyAl{@@@@QQ@CM@FeqnU@Cg@@l@AY///////////////////////////////////////////////////////////////@Cz@@a@Ab@A^@@E@@h@U\\'
-    text2decomp = msj1
+    msj1 = "@Ak@BM@AX@AK@AS@@}AhLAhNAhK@@@@H[@QH@BiY|v@A}@BV@Au@An@Au@Aj@Ak@Al@Aj@An@An@An@Ak@Ak@Ak@Ar@Ar@Ar@Ap@Ap@Ap@Ch@BX@@v@@{@@K@@v@@A@A_@@I@@{@Vf @B@@BN@Au@AJ@AW@@?AhIAhLAhG@@@@P[@Qo@Jc[]o@Bn@B~@BV@B@@BJ@Au@Ao@Aq@Al@An@Ao@An@Ak@Ak@Aj@Ar@Ar@Ar@Ap@Ap@Ap@Lv@Ax@BU@@o@@w@A_@@I@Az@@J@@s@Uu"
+    msj2 = '@A\@Aa@AW@AX@A\@ATAgnAgoAgm@@@@C\@EF@BKAKR@Bc@Bf@B_@B\@B^@BZ@BJ@BJ@BI@A|@A}@A{@Am@Am@Am@Ar@Ar@Ar@An@An@An@Hm@Au@BO@AX@@f@AN@@Q@An@@P@@C@U}'
+    text2decomp = msj2
 
     inicio = time()
     msg_txt = dc.decomMesage(text2decomp)

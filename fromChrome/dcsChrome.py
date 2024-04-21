@@ -130,10 +130,10 @@ class DcsChromeReport:
         #service = Service(self.check_driver())
         #this line make path to chromedriver web
         chromedrive_path = conf.get_cred(section="chromedriver")
-        print(chromedrive_path['pth'])
+        #print(chromedrive_path['pth'])
         service = Service(executable_path=chromedrive_path['pth'])
         # instancia el webDriver
-        print(self.path_down)
+        #print(self.path_down)
         driver = webdriver.Chrome(service=service, options=self.opts_driver(self.path_down))
         #driver = webdriver.Chrome(executable_path='/home/darwin/Documentos/PythonProyects/DCSReport/chromediver/.wdm/drivers/chromedriver/linux64/119.0.6045.105/chromediver/')
         return driver
@@ -161,15 +161,20 @@ class DcsChromeReport:
             welcome = wait.until(
                 exp.visibility_of_element_located((By.XPATH, '/html/body/div[2]/div[2]/div[1]/button')))
             if welcome.text.find("WELCOME") > -1:
+                return 200 # login is correct!
+            else:
                 notify = Sender()
                 mail_cre = conf.get_cred(section='email_noti_conf')
                 message2send = conf.get_cred(section='email_noti_log_mess')
                 notify.mail_notifier(mail_cre['smtp_server'], mail_cre['sender'], mail_cre['password'],
-                                     mail_cre['recipies'],message2send['subject'], message2send['message'])
-                return 200 # login is correct!
-            else:
+                                     mail_cre['recipies'], message2send['subject'], message2send['message'])
                 return 400 ## error in the page
         except TimeoutException:
+            notify = Sender()
+            mail_cre = conf.get_cred(section='email_noti_conf')
+            message2send = conf.get_cred(section='email_noti_log_mess')
+            notify.mail_notifier(mail_cre['smtp_server'], mail_cre['sender'], mail_cre['password'],
+                                 mail_cre['recipies'], message2send['subject'], message2send['message'])
             print("Error to loggin return 500")
 
             return 500
@@ -276,7 +281,7 @@ class DcsChromeReport:
         res = []
         try:
             wait.until(exp.visibility_of_element_located((By.ID, "UserName")))
-
+            log_ok = self.login(driver)
             cre = conf.get_cred(section="dsc_filters")
             welcome = wait.until(
                 exp.visibility_of_element_located((By.XPATH, '/html/body/div[2]/div[2]/div[1]/button')))
