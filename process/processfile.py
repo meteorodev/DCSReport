@@ -213,6 +213,7 @@ class ProcessDownloadFile(object):
         # firsts clean datos list to complete items like var_ord length
         len_var_ord= len(var_ord.iloc[:, 0])
         len_data = len(datos)
+        #print(datos)
         if len_var_ord >= len_data:
             dif_len = len_var_ord + 1 - len_data
             for i in range(0,dif_len):
@@ -226,7 +227,7 @@ class ProcessDownloadFile(object):
                 if str(datos[i]).replace(".", "").replace("-", "").replace("+", "").isnumeric() == False:
                     #print("iter", i, "no es Digito", datos[i], pun_obs)
                     datos[i] = None
-        #print(datos)
+        # print(".... ... ... .     ",qc_d)
         if qc_d == 1:
             for d in range(1, len(var_ord.iloc[:, 0]), 2):
                 dic_nemo = {"sensor": "1", "valor": datos[d], "calidad": datos[d + 1]}
@@ -245,6 +246,8 @@ class ProcessDownloadFile(object):
                        "fechaCreacionArchivo": fecha_cre, "fechaTomaDato": fecha_dato, "estado": -99,
                        "data": data_dic}
 
+        #print(data_insert)
+
         return data_insert
 
 
@@ -262,7 +265,7 @@ class ProcessDownloadFile(object):
             data with a flag estado = -99 this mean that data was insert with the new process. teke this note form migration
             Args:
                 datos (list) or string : list of data with values from stations messages
-                var_ord (dataframe): order in de message for this variable
+                var_ord (dataframe): order in de message for this variable with cols(nemonico, variable, orden, decimales, caracteres)
                 nesdis (str): id form noaa dcs system example 395685A
                 cod_inamhi (int): Id for the station in the database for example 3456
                 pun_obs (str): Id for station in INAMHI format example M0001
@@ -281,7 +284,7 @@ class ProcessDownloadFile(object):
             cad = "mongodb://" + params['user'] + ":" + params['password'] + "@" + \
                   params['host'] + ":27017/" + params['database']
             print("cadena de conexion se ve a continuacion ")
-            print(cad)
+            #print(cad)
             #print(params['database'], " : ", params['collection'])
 
             client = pymongo.MongoClient(cad, 1000)
@@ -301,7 +304,7 @@ class ProcessDownloadFile(object):
                     data2insert = self.make_dic_insert(datos, fecha_dato, var_ord, cod_inamhi, pun_obs,qc_d)
                     val = self.verify_insert(data2insert, nesdis, cod_inamhi, pun_obs, collection)
                     # self.makebk.add_line(path_backup, cod_inamhi, nesdis, fecha_dato)
-            elif msg_type == 1:
+            elif msg_type == 1: # one encode message
                 #print("****************************************************************")
                 dec = Msg_Met_Decoder()
                 decimals = var_ord.iloc[:, 3]
@@ -310,7 +313,8 @@ class ProcessDownloadFile(object):
                 for i in range(0, len(datos)):
                     fecha_dato = curr_date - timedelta(hours=(len(datos)-1-i))
                     #print( "fechaa guardar ",fecha_dato, "i",i, )
-                    array_decode = dec.decomMesage(datos[i])
+
+                    array_decode = dec.decomMesage(datos[i], var_ord.iloc[:,3], var_ord.iloc[:,4])
                     for j in range(0, len(array_decode)):
                         if decimals[j] > 0:
                             array_decode[j] = array_decode[j] / 10 ** decimals[j]
@@ -328,17 +332,18 @@ class ProcessDownloadFile(object):
                 val_cut = 0
                 for ind, val in enumerate(datos):
                     if val.startswith(st_find):
-                        print(val, ind)
                         val_cut = ind
                         break
-                print(datos[0], st_find)
                 fecha_dato = self.text_to_date(textdate)
+                vacio = ["vacio"]
                 if val_cut > 0:
                     seg_1 = datos[2:val_cut - 1]
                     seg_1.append('55')
+                    seg_1 = vacio+seg_1
                     data2insert = self.make_dic_insert(seg_1, fecha_dato, var_ord, cod_inamhi, pun_obs, qc_d)
                     val = self.verify_insert(data2insert, nesdis, cod_inamhi, pun_obs, collection)
                     seg_2 = datos[val_cut + 2:]
+                    seg_2 = vacio + seg_2
                     data2insert = self.make_dic_insert(seg_2, fe, var_ord, cod_inamhi, pun_obs, qc_d)
                     val = self.verify_insert(data2insert, nesdis, cod_inamhi, pun_obs, collection)
                 else:
@@ -383,6 +388,7 @@ class ProcessDownloadFile(object):
         for it in range(min_group, max_group + 1):
             # print("--------- ",it," ---------------")
             var_order = self.get_config_sta(it)
+            #print("read_excel_data: var order **** \n ", var_order)
             # check if file of groups exist,
             if var_order is None:
                 print("no configuration file exist var_group"+str(it)+".csv ")
@@ -438,7 +444,7 @@ class ProcessDownloadFile(object):
 if __name__ == '__main__':
     proc = ProcessDownloadFile()
     #     proc.readExcel("/home/darwin/Documentos/hidro2022_10_06_15_09.xlsx" )
-    proc.test_mongo_connection()
+    #proc.test_mongo_connection()
     # print(proc.__doc__)
 #    paramas = conf.get_cred()
-#    proc.read_excel("/home/darwin/Documentos/DCS_files/hidro2022_10_15_22_47.xlsx", "../HidroAlertas.nl")
+    proc.read_excel_data("/home/darwin/Descargas/MessagesExport (5).xlsx", "../HidroAlertas.nl","/")

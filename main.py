@@ -29,10 +29,10 @@ if __name__ == '__main__':
     mdcs = ManageDCS()
     mdcs.check_day(dcs_url)
 
-    file2process = dcs.scraping(dcs_url)
+    #file2process = dcs.scraping(dcs_url)
 
-    #file2process = [['/home/darwin/Documentos/DCS_files/meteo2023_11_01_00_18.xlsx', 'METEOS.nl']]
-    #file2process = [['/home/darwin/Documentos/DCS_files/hidro2023_11_02_21_29.xlsx', 'HidroAlertas.nl']] #,  #,
+    file2process = [['/home/darwin/Descargas/meteo2024_06_19_17_10.xlsx', 'METEOS.nl']]
+    #file2process = [['/home/darwin/Documentos/DCS_files/hidro2022_10_15_21_29.xlsx', 'HidroAlertas.nl']] #,  #,
     #                ['/home/darwin/Documentos/DCS_files/meteo2023_06_15_13_10.xlsx', 'METEOS.nl'],
     #                ['/home/darwin/Documentos/DCS_files/hidro2023_07_21_14_10.xlsx', 'HidroAlertas.nl']]
     #

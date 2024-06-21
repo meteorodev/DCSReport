@@ -290,7 +290,7 @@ class DcsChromeReport:
                     # The new filters that must be configured in the DCS platform are written in config.ini file
                 filters = cre['filter_name'].split(',')
                 for index, f in enumerate(filters):
-                    prefs = cre['pre_file'].split(',')
+                    prefs = cre['pre_file'].split(',').trip()
                     ls_st = cre['list_stations'].split(',')
                     res.append([self.select_filter(driver, twait, f, prefs[index]),ls_st[index]])
                     print("index", index, 'valor', f, "... ", prefs[index], "... ", ls_st[index])
