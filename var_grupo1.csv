@@ -1,23 +1,23 @@
-nemonico;variable;orden;decimales;caracteres
-141011h;Nivel de agua Maximo de 1 hora;1;2;3
+nemonico;variable;orden;decimales;caracteres;nemonico2
+141011h;Nivel de agua Maximo de 1 hora;1;2;3;014100101h
 ;Calidad del dato;2;2;3
-141021h;Nivel de agua Minimo de 1 hora;3;2;3
+141021h;Nivel de agua Minimo de 1 hora;3;2;3;014100201h
 ;Calidad del dato;4;2;3
-141041h;Nivel de agua Promedio de 1 hora;5;2;3
+141041h;Nivel de agua Promedio de 1 hora;5;2;3;014100401h
 ;Calidad del dato;6;2;3
-1410161h;Nivel de agua Instantaneo de 1 hora;7;2;3
+1410161h;Nivel de agua Instantaneo de 1 hora;7;2;3;014101601h
 ;Calidad del dato;8;2;3
-1410321h;Nivel de agua Desviacion estandar de 1 hora;9;2;3
+1410321h;Nivel de agua Desviacion estandar de 1 hora;9;2;3;014103201h
 ;Calidad del dato;10;2;3
-30311h;Temperatura del agua Maximo de 1 hora;11;2;3
+30311h;Temperatura del agua Maximo de 1 hora;11;2;3;030030101h
 ;Calidad del dato;12;2;3
-30321h;Temperatura del agua Minimo de 1 hora;13;2;3
+30321h;Temperatura del agua Minimo de 1 hora;13;2;3;030030201h
 ;Calidad del dato;14;2;3
-30341h;Temperatura del agua Promedio de 1 hora;15;2;3
+30341h;Temperatura del agua Promedio de 1 hora;15;2;3;030030401h
 ;Calidad del dato;16;2;3
-303161h;Temperatura del agua Instantaneo de 1 hora;17;2;3
+303161h;Temperatura del agua Instantaneo de 1 hora;17;2;3;030031601h
 ;Calidad del dato;18;2;3
-303321h;Temperatura del agua Desviacion estandar de 1 hora;19;2;3
+303321h;Temperatura del agua Desviacion estandar de 1 hora;19;2;3;030033201h
 ;Calidad del dato;20;2;3
-3919161h;Voltaje de bateria instantaneo de 1 hora;21;2;3
+3919161h;Voltaje de bateria instantaneo de 1 hora;21;2;3;039191601h
 ;Calidad del dato;22;2;3

@@ -1,15 +1,15 @@
-nemonico;variable;orden;decimales;caracteres
-141011h;Nivel de agua Maximo de 1 hora;1;2;3
+nemonico;variable;orden;decimales;caracteres;nemonico2
+141011h;Nivel de agua Maximo de 1 hora;1;2;3;014100101h
 ;Calidad del dato;2;2;3
-141021h;Nivel de agua Minimo de 1 hora;3;2;3
+141021h;Nivel de agua Minimo de 1 hora;3;2;3;014100201h
 ;Calidad del dato;4;2;3
-141041h;Nivel de agua Promedio de 1 hora;5;2;3
+141041h;Nivel de agua Promedio de 1 hora;5;2;3;014100401h
 ;Calidad del dato;6;2;3
-1410161h;Nivel de agua Instantaneo de 1 hora;7;2;3
+1410161h;Nivel de agua Instantaneo de 1 hora;7;2;3;014101601h
 ;Calidad del dato;8;2;3
-1410321h;Nivel de agua Desviacion estandar de 1 hora;9;2;3
+1410321h;Nivel de agua Desviacion estandar de 1 hora;9;2;3;014103201h
 ;Calidad del dato;10;2;3
-391941h;Voltaje de bateria prom;11;2;3
+391941h;Voltaje de bateria prom;11;2;3;039190401h
 ;Calidad del dato;12;2;3
-3919161h;Voltaje de bateria instantaneo de 1 hora;13;2;3
+3919161h;Voltaje de bateria instantaneo de 1 hora;13;2;3;039191601h
 ;Calidad del dato;14;2;3

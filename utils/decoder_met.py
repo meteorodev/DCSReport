@@ -13,15 +13,15 @@ class Msg_Met_Decoder():
         for NumeroCaracteres in caracteres:
             dato = cadena[contador:contador + NumeroCaracteres]
             datoCadena = ""
-            print(dato)
+            # print(dato)
             if (dato != "///"):
                 for datoActual in dato:
                     datoAc = format(ord(datoActual), 'b')
                     datoCadena = datoCadena + datoAc[-6:]
-                print(datoCadena)
+                # print(datoCadena)
                 datoDecodificado = int(datoCadena, 2) / multiplicador[contadorMultiplicador]
                 VectorDecodificado.append(datoDecodificado)
-                print(datoDecodificado)
+                # print(datoDecodificado)
                 contadorMultiplicador = contadorMultiplicador + 1
                 contador = contador + NumeroCaracteres
             else:
@@ -70,10 +70,10 @@ class Msg_Met_Decoder():
             print("Msg_Met_Decoder: decomMesage",var)
 
 
-        # for i in range(0, len(text2decomp), step):
-        #     val=self.decompileChar(text2decomp[i:i + step])
-        #     print(text2decomp[i:i + step], val)
-        #     message.append(val)
+        for i in range(0, len(text2decomp), step):
+            val=self.decompileChar(text2decomp[i:i + step])
+            print(text2decomp[i:i + step], val)
+            message.append(val)
         return message
 
 

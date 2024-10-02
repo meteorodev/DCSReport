@@ -25,7 +25,7 @@ from selenium.webdriver.support import expected_conditions as exp
 # controlar el tiempo de aparicion de lso elementos
 from selenium.webdriver.support.ui import WebDriverWait
 # para instalar automaticamente el webDriver
-#from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.chrome import ChromeDriverManager
 import utils.manage_conf as conf
 from utils.send_notification import Sender
 
@@ -127,16 +127,20 @@ class DcsChromeReport:
             driver: chrome driver objects tto use selenium functions
         """
 
-        #service = Service(self.check_driver())
-        #this line make path to chromedriver web
-        chromedrive_path = conf.get_cred(section="chromedriver")
-        #print(chromedrive_path['pth'])
-        service = Service(executable_path=chromedrive_path['pth'])
-        # instancia el webDriver
-        #print(self.path_down)
+        """This function initializes chrome driver objects"""
+        service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=self.opts_driver(self.path_down))
-        #driver = webdriver.Chrome(executable_path='/home/darwin/Documentos/PythonProyects/DCSReport/chromediver/.wdm/drivers/chromedriver/linux64/119.0.6045.105/chromediver/')
         return driver
+        # #service = Service(self.check_driver())
+        # #this line make path to chromedriver web
+        # chromedrive_path = conf.get_cred(section="chromedriver")
+        # #print(chromedrive_path['pth'])
+        # service = Service(executable_path=chromedrive_path['pth'])
+        # # instancia el webDriver
+        # #print(self.path_down)
+        # driver = webdriver.Chrome(service=service, options=self.opts_driver(self.path_down))
+        # #driver = webdriver.Chrome(executable_path='/home/darwin/Documentos/PythonProyects/DCSReport/chromediver/.wdm/drivers/chromedriver/linux64/119.0.6045.105/chromediver/')
+        # return driver
 
     def login(self, driver):
         """ This functions logon into DCS platform to get geos data
@@ -290,7 +294,8 @@ class DcsChromeReport:
                     # The new filters that must be configured in the DCS platform are written in config.ini file
                 filters = cre['filter_name'].split(',')
                 for index, f in enumerate(filters):
-                    prefs = cre['pre_file'].split(',').trip()
+                    # print(filters)
+                    prefs = cre['pre_file'].split(',')
                     ls_st = cre['list_stations'].split(',')
                     res.append([self.select_filter(driver, twait, f, prefs[index]),ls_st[index]])
                     print("index", index, 'valor', f, "... ", prefs[index], "... ", ls_st[index])

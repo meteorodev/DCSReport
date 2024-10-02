@@ -14,8 +14,8 @@ password=password
 # add prefix to the name file for each filter, and add a list stations in nl format for each filter
 [dsc_filters]
 filter_name = [NETLIST] HIDROALERTA [1HOUR], [NETLIST] METEO [1HOUR]
-pre_file = hidro, meteo
-list_stations = HidroAlertas.nl, METEOS.nl
+pre_file = hidro,meteo
+list_stations = HidroAlertas.nl,METEOS.nl
 
 # test to load config
 [test] 

@@ -13,6 +13,7 @@ from process.makeBkFile import MakeBackupFile
 import utils.manage_conf as conf
 from utils.decoder_met import Msg_Met_Decoder
 import os
+import numpy as np
 
 
 class ProcessDownloadFile(object):
@@ -151,6 +152,8 @@ class ProcessDownloadFile(object):
         Returns:
             my_date : date object
         """
+        if isinstance(textdate, datetime):
+            return textdate
         try:
             if (len(textdate.split("-")) > 1):  # for date in  y-m-d, H:M:S 2023-05-21,00:00:02, format
                 my_date = datetime.strptime(textdate, "%Y-%m-%d %H:%M:%S")
@@ -245,7 +248,8 @@ class ProcessDownloadFile(object):
                        "medioTransmision": "STGO",
                        "fechaCreacionArchivo": fecha_cre, "fechaTomaDato": fecha_dato, "estado": -99,
                        "data": data_dic}
-
+        
+        print(data_dic)
         #print(data_insert)
 
         return data_insert
@@ -296,6 +300,7 @@ class ProcessDownloadFile(object):
             #### insert into the database dependency of msg type
             # for message in clear text and just one message
             print("def insert_data: ", nesdis,":", cod_inamhi ,":",pun_obs,": msg_type ",msg_type )
+            print(datos)
             if msg_type == 0:
                 textdate = datos[0]
                 fecha_dato = self.text_to_date(textdate)
@@ -315,6 +320,8 @@ class ProcessDownloadFile(object):
                     #print( "fechaa guardar ",fecha_dato, "i",i, )
 
                     array_decode = dec.decomMesage(datos[i], var_ord.iloc[:,3], var_ord.iloc[:,4])
+                    # print(array_decode)
+
                     for j in range(0, len(array_decode)):
                         if decimals[j] > 0:
                             array_decode[j] = array_decode[j] / 10 ** decimals[j]
@@ -327,6 +334,7 @@ class ProcessDownloadFile(object):
                 #print("****************************************************************")
             elif msg_type == 2:  # form message that have two messages in one
                 textdate = datos[0] + " " + datos[1]
+                
                 fe = datetime.strptime(textdate, "%Y-%m-%d %H:%M:%S") + timedelta(hours = 1)
                 st_find = "55" + datetime.strftime(fe,"%Y-%m-%d")
                 val_cut = 0
@@ -360,29 +368,21 @@ class ProcessDownloadFile(object):
         except pymongo.errors.ConnectionFailure as error:
             print('Could not connect to MongoDB: %s' % error)
             return 'Could not connect to MongoDB: %s' % error
+        self.insert_data_postgres(datos, var_ord, self.stations, self.file_type, self.row_index, pun_obs, msg_type, date_file)
 
     # esta funcion le el excel descargado coteja la infromación con elcodigo INAMHI y lo ingresa a la base de datos
     def read_excel_data(self, file_data, file_config, path_backup):
-        # this functios read excel into pandas dataframe-
-        """ This function read excel download to dcs and load var_group file for save in database
-        Args: 
-            file_data (string): path where Excel file is locate
-            file_config (string): path where group file is locate
-        Raises:
-            RuntimeError: 
-        Returns:
-            : 
-        """
-
         data = pd.read_excel(file_data, engine="openpyxl")
         # Cleaning excel replace extra characters and make Address to str
         data = data.iloc[:, [0, 8, 17]]
         data['ADDRESS'] = data['ADDRESS'].replace("'", "")
         data['ADDRESS'] = data['ADDRESS'].astype(str)
-        stations = self.get_stations_file(file_config)
+        self.stations = self.get_stations_file(file_config)
+        self.file_type = "HidroAlertas" if "HidroAlertas" in file_config else "METEOS"
+        
         # print(stations.head(4))
-        max_group = stations.iloc[:, 4].max()
-        min_group = stations.iloc[:, 4].min()
+        max_group = self.stations.iloc[:, 4].max()
+        min_group = self.stations.iloc[:, 4].min()
         ### iter into group stations
         # in each iter load group file configuration
         for it in range(min_group, max_group + 1):
@@ -392,12 +392,12 @@ class ProcessDownloadFile(object):
             # check if file of groups exist,
             if var_order is None:
                 print("no configuration file exist var_group"+str(it)+".csv ")
-
             else:
-                stations_gr = stations[stations.iloc[:, 4] == it]
+                stations_gr = self.stations[self.stations.iloc[:, 4] == it]
                 # print("grupo")
                 # print(len(stations_gr))
                 for row_it in range(0, len(stations_gr.iloc[:, 1])):
+                    self.row_index = row_it  # Inicializar self.row_index aquí
                     nesdis = stations_gr.iloc[row_it, 0]
                     cod_inamhi = stations_gr.iloc[row_it, 1]
                     pun_obs = stations_gr.iloc[row_it, 2]
@@ -406,10 +406,6 @@ class ProcessDownloadFile(object):
                     msg_type = int(stations_gr.iloc[row_it, 6])  ## if the mesage is in pseudobinari format
                     qc_d = int(stations_gr.iloc[row_it, 7])
                     if len(fila) > 0:  # if nesdis exist into excel file
-                        #agregar una condicion para evitar dañar el string recibido
-                        #si el dato recibido está decodificado esta bien la parte de limpiar caracteres y espacioes en blanco
-                        #si el dato está codificado con estas validaciones dañamos el dato y no se puede decodificar ademas al eliminar los espacios en blanco se elimina la posibilidad de saber si es uno o dos mensajes
-                        #temporalmente si el dato está codificado se envia en otra varible, data_binary
                         datos = fila.iloc[0, 2]
                         date_file = fila['CAR TIME']
                         if msg_type == 0 or msg_type == 2:
@@ -420,16 +416,15 @@ class ProcessDownloadFile(object):
                             datos = datos.split(' ')
                         error_time = datetime.strptime(fila.iloc[0, 1], "%m/%d/%Y %H:%M:%S.%f")  # Car Time
                         if datos[0].replace(".", "").replace("-", "").isnumeric() or datos[0].startswith('@'):
-                            # print("Nesdis procesado ;",nesdis,";id_est;",str(cod_inamhi),";cod_inamhi;",  pun_obs)
                             transmission_state = 5
-                            self.insert_data(datos, var_order, nesdis, cod_inamhi, pun_obs, msg_type,date_file, qc_d)
-                            # inserta una fila al archivo de backup de datos diarios
-                            # self.makebk.add_line(path_backup, cod_inamhi, nesdis, fecha_dato)
+                            print(f"Inserting in PostgreSQL: {date_file}")
+
+                            self.insert_data(datos, var_order, nesdis, cod_inamhi, pun_obs, msg_type, date_file, qc_d)
                         else:
                             ## con fallas trasnmite pero el mensaje continen errores
                             transmission_state = 4
                             print("El mensaje tienen errores;", nesdis, ";id_est;", str(cod_inamhi), ";cod_inamhi;",
-                                  pun_obs, error_time)
+                                pun_obs, error_time)
 
                         # transforma el campo de la fecha a fecha
                     # ********
@@ -437,6 +432,112 @@ class ProcessDownloadFile(object):
                     # Quitar este comentario
                     # self.set_station_state(id_station=cod_inamhi, new_state=transmission_state)
                 # print(data.head(5))
+                
+    def get_id_estacion(self,stations_data, file_type, row_index):
+        """
+        Obtiene el id_estacion basado en el tipo de archivo y el índice de fila.
+        """
+        if file_type == "HidroAlertas":
+            return stations_data.iloc[row_index, 1]
+        elif file_type == "METEOS":
+            return stations_data.iloc[row_index, 8]
+        else:
+            return None
+
+    def check_existing_record(self,cur, tabla, fecha_toma_dato, id_estacion):
+        """
+        Verifica si ya existe un registro para la fecha y estación dadas.
+        """
+        query = f"""
+        SELECT COUNT(*) FROM automaticas._{tabla}
+        WHERE fecha_toma_dato = %s AND id_estacion = %s
+        """
+        cur.execute(query, (fecha_toma_dato, id_estacion))
+        return cur.fetchone()[0] > 0
+
+    def insert_data_postgres(self, datos, var_ord, stations_data, file_type, row_index, pun_obs, msg_type, date_file):
+        try:
+            params = conf.get_cred(section="postgresql2")
+            conn = psycopg2.connect(**params)
+            cur = conn.cursor()
+
+            # Obtener id_estacion
+            id_estacion = self.get_id_estacion(stations_data, file_type, row_index)
+            if id_estacion is None:
+                print(f"No se pudo obtener id_estacion para el índice {row_index} en {file_type}")
+                return
+
+            # Convertir id_estacion a int estándar de Python si es numpy.int64
+            if isinstance(id_estacion, np.integer):
+                id_estacion = int(id_estacion)
+
+            # Obtener fecha_toma_dato
+            if msg_type == 0:
+                fecha_toma_dato = self.text_to_date(datos[0])
+            elif msg_type == 1:
+                fecha_toma_dato = self.text_to_date(date_file.iloc[0])
+            else:
+                fecha_toma_dato = self.text_to_date(datos[0] + " " + datos[1])
+            
+            if fecha_toma_dato is None:
+                print(f"Error: No se pudo convertir la fecha {datos[0]}")
+
+            fecha_ingreso = datetime.now()
+
+            for index, row in var_ord.iterrows():
+                if pd.notna(row['nemonico2']):
+                    tabla = row['nemonico2']
+                    orden = int(row['orden'])  # Convertir a int estándar
+                    decimales = int(row['decimales'])  # Convertir a int estándar
+
+                    # Verificar si la tabla existe
+                    cur.execute(f"SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '_{tabla}')")
+                    table_exists = cur.fetchone()[0]
+
+                    if not table_exists:
+                        print(f"La tabla _{tabla} no existe.")
+                        continue
+
+                    # Verificar si el registro ya existe
+                    if self.check_existing_record(cur, tabla, fecha_toma_dato, id_estacion):
+                        print(f"Registro ya existe en _{tabla} para fecha {fecha_toma_dato} y estación {id_estacion}")
+                        continue
+
+                    # Obtener y procesar el valor
+                    if msg_type == 1:
+                        dec = Msg_Met_Decoder()
+                        valor = dec.decomMesage(datos[0], [decimales], [int(row['caracteres'])])[0]
+                    else:
+                        valor = datos[orden] if orden < len(datos) else None
+
+                    if valor is not None:
+                        if isinstance(valor, np.generic):
+                            valor = valor.item()  # Convertir tipos numpy a tipos Python estándar
+                        if str(valor).replace(".", "").replace("-", "").replace("+", "").isnumeric():
+                            valor = float(valor) / (10 ** decimales)
+                        else:
+                            valor = None
+                    print(f"Inserting in PostgreSQL: {fecha_toma_dato}")
+
+                    # Insertar el dato
+                    query = f"""
+                    INSERT INTO automaticas._{tabla} (fecha_toma_dato, fecha_ingreso, "1h", id_estacion, id_usuario, id_estado_proceso)
+                    VALUES (%s, %s, %s, %s, 0, 19)
+                    """
+                    cur.execute(query, (fecha_toma_dato, fecha_ingreso, valor, id_estacion))
+
+            conn.commit()
+            print(f"Datos insertados correctamente para la estación {id_estacion}")
+
+        except (Exception, psycopg2.Error) as error:
+            print(f"Error al insertar datos en PostgreSQL: {error}")
+            if conn:
+                conn.rollback()
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
 
 
 #
@@ -447,4 +548,4 @@ if __name__ == '__main__':
     #proc.test_mongo_connection()
     # print(proc.__doc__)
 #    paramas = conf.get_cred()
-    proc.read_excel_data("/home/darwin/Descargas/MessagesExport (5).xlsx", "../HidroAlertas.nl","/")
+    # proc.read_excel_data("/home/darwin/Descargas/MessagesExport (5).xlsx", "../HidroAlertas.nl","/")
