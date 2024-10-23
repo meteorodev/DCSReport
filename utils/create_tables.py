@@ -30,7 +30,7 @@ class CreateTables:
                 SELECT EXISTS (
                     SELECT 1 
                     FROM information_schema.tables 
-                    WHERE table_schema = 'automaticas' 
+                    WHERE table_schema = 'public' 
                     AND table_name = '_{nombre_tabla}'
                 );
             """)
@@ -39,7 +39,7 @@ class CreateTables:
             if not exists:
                 # Crear la tabla si no existe
                 create_table_query = f"""
-                    CREATE TABLE IF NOT EXISTS automaticas._{nombre_tabla} (
+                    CREATE TABLE IF NOT EXISTS _{nombre_tabla} (
                         id_usuario integer,
                         id_estacion integer,
                         estacion text COLLATE pg_catalog."default",
@@ -57,12 +57,12 @@ class CreateTables:
                 # Crear índices para optimizar las consultas
                 cur.execute(f"""
                 CREATE INDEX IF NOT EXISTS idx_{nombre_tabla}_id_estacion 
-                ON automaticas._{nombre_tabla} (id_estacion);
+                ON _{nombre_tabla} (id_estacion);
                 """)
                 
                 cur.execute(f"""
                 CREATE INDEX IF NOT EXISTS idx_{nombre_tabla}_fecha 
-                ON automaticas._{nombre_tabla} (fecha_toma_dato);
+                ON _{nombre_tabla} (fecha_toma_dato);
                 """)
 
                 conn.commit()
