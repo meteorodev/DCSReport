@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     #dcs = DcsFirefoxReport()
     dcs = DcsChromeReport()
-    dcs.path_down = "C:\\Users\\JUANKAR\\Downloads\\" ### ruta de descarga para los archivos
+    #dcs.path_down = "C:\\Users\\JUANKAR\\Downloads\\" ### ruta de descarga para los archivos
     cre = conf.get_cred()
     dcs_url = cre['main_url']
 
