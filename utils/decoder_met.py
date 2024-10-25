@@ -5,11 +5,57 @@ from time import time
 
 class Msg_Met_Decoder():
 
+    def bynary2text(self, msg, group_file):
+        """ This function get pseudobinary message and make dataframe pandas
+            Args:
+                msg (str):
+                group_file (Dataframe): Pandas Dataframe with configuration
+            Raises:
+                :
+            Returns:
+                :
+        """
+        print("init decoder")
+        decimals = group_file.iloc[:,3]
+        nchar = group_file.iloc[:,4]
+        lengroup = 0
+        for idx,value in enumerate(nchar):
+            seg = msg[idx:idx+value]
+            # print( seg )
+            datbin= ""
+            if seg != "///":
+                for s in seg:
+                    dhex = format(ord(s), 'b')
+                    datbin = datbin + dhex[-6:]
+                    #print(hex, dhex, "datbin", datbin )
+                datdec = int(datbin, 2) / 10 ** decimals[idx]
+                print("SEG ",seg," dato ",datdec,  " car " ,nchar[idx], " dec " ,decimals[idx])
+            #counter += i
+        print("fin")
+
+
+
     def decoPseudobinario(cadena, caracteres,
-                          multiplicador):  # FUNCION PARA DECODIFICAR TRAMA EN PSEUDOBINARIO. RECIVE COMO PARAMETROS: 1.-CADENA A DECODIFICAR. 2.- VECTOR CON LOS NUMEROS DE CARACTERES QUE CONFORMAN LOS DATOS.  3.- VECTOR CON LOS MULTIPLICADORES DE LOS DATOS.
+                          multiplicador):
+        """ This function get pseudobinary message and make dataframe pandas
+            Args:
+                cadena (str): This function get pseudobinary message and make dataframe pandas
+                characters ([int]): Array with number of character by each parameter
+                decimals ([int]) : Array with number of decimal by each paramter
+            Raises:
+                No reaises:
+            Returns:
+                : This function get pseudobinary message and make dataframe pandas
+        """
+        # FUNCION PARA DECODIFICAR TRAMA EN PSEUDOBINARIO. RECIVE COMO PARAMETROS:
+        # 1.-CADENA A DECODIFICAR.
+        # 2.- VECTOR CON LOS NUMEROS DE CARACTERES QUE CONFORMAN LOS DATOS.
+        # 3.- VECTOR CON LOS MULTIPLICADORES DE LOS DATOS.
+
         VectorDecodificado = []
         contador = 0
         contadorMultiplicador = 0
+
         for NumeroCaracteres in caracteres:
             dato = cadena[contador:contador + NumeroCaracteres]
             datoCadena = ""
