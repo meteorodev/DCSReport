@@ -76,15 +76,20 @@ class ProcessDownloadFile(object):
                 print('Database connection closed.')
 
     def get_stations_file(self, fileST):
-        """ Return a list of stations with INAMHI code an NESDIS code to compare with reports
+        """Return a list of stations with INAMHI code an NESDIS code to compare with reports
         Args:
             fileST (str): file with a list station in .nl format
         Returns:
             stations (dataframe) : dataframe with stations.
         """
-        # TODO en este caso solo se llera un archivo de codigos, se debe implemetar una tabla de la cual
-        #  se extraidga esta inf
-        stations = pd.read_csv(fileST, sep=":", header=None)
+        # Leer el archivo asegurando que los campos se interpreten correctamente
+        stations = pd.read_csv(fileST, sep=":", header=None, dtype=str)
+        
+        # Convertir la columna del grupo (índice 4) a numérico
+        stations[4] = pd.to_numeric(stations[4], errors='coerce')
+        
+        print("Grupos encontrados:", stations[4].unique())  # Para debug
+        
         return stations
 
     def get_config_sta(self, id_group):
@@ -105,43 +110,43 @@ class ProcessDownloadFile(object):
             return None
 
 
-    def set_station_state(self, id_station, new_state):
-        """ Cambia el estado de una estacion Transmite , No transmite, transmite con errores
-        Args:
-            id_station (int): Identificador de la estacion
-            new_state (int) : Nuevo estado de transmisión de la estacion
-        Raises:
-            RuntimeError: Rrror de conexion a postgreSQL
-        """
+    # def set_station_state(self, id_station, new_state):
+    #     """ Cambia el estado de una estacion Transmite , No transmite, transmite con errores
+    #     Args:
+    #         id_station (int): Identificador de la estacion
+    #         new_state (int) : Nuevo estado de transmisión de la estacion
+    #     Raises:
+    #         RuntimeError: Rrror de conexion a postgreSQL
+    #     """
 
-        conn = None
-        try:
-            # read connection parameters
-            params = conf.get_cred(section="postgresql")
-            conn = psycopg2.connect(**params)
-            # create a cursor
-            cur = conn.cursor()
-            # aqui se cambia el estado de la estacion
-            query = "select id_estado from administrative.estaciones_estados where id_estacion = " + str(
-                id_station)
-            cur.execute(query)
-            est_actual = cur.fetchone()
-            # print("no cambio el estado")
-            if est_actual[0] != new_state:
-                # print("Estado Actual ", est_actual[0], "Id_estacion ", id_estacion)
-                query = "update administrative.estaciones_estados set id_estado = " + str(
-                    new_state) + " where id_estacion = " + str(id_station) + ";"
-                # print(query)
-                cur.execute(query)
-                conn.commit()
-            # close the communication with the PostgreSQL
-            cur.close()
-        except (Exception, psycopg2.DatabaseError) as error:
-            print(error)
-        finally:
-            if conn is not None:
-                conn.close()
-                # print('Database connection closed.')
+    #     conn = None
+    #     try:
+    #         # read connection parameters
+    #         params = conf.get_cred(section="postgresql")
+    #         conn = psycopg2.connect(**params)
+    #         # create a cursor
+    #         cur = conn.cursor()
+    #         # aqui se cambia el estado de la estacion
+    #         query = "select id_estado from administrative.estaciones_estados where id_estacion = " + str(
+    #             id_station)
+    #         cur.execute(query)
+    #         est_actual = cur.fetchone()
+    #         # print("no cambio el estado")
+    #         if est_actual[0] != new_state:
+    #             # print("Estado Actual ", est_actual[0], "Id_estacion ", id_estacion)
+    #             query = "update administrative.estaciones_estados set id_estado = " + str(
+    #                 new_state) + " where id_estacion = " + str(id_station) + ";"
+    #             # print(query)
+    #             cur.execute(query)
+    #             conn.commit()
+    #         # close the communication with the PostgreSQL
+    #         cur.close()
+    #     except (Exception, psycopg2.DatabaseError) as error:
+    #         print(error)
+    #     finally:
+    #         if conn is not None:
+    #             conn.close()
+    #             # print('Database connection closed.')
 
     def text_to_date(self, textdate):
         """ This function make a text to date compare two different formats to date
@@ -214,43 +219,64 @@ class ProcessDownloadFile(object):
         """
         data_dic = {}
         # firsts clean datos list to complete items like var_ord length
-        len_var_ord= len(var_ord.iloc[:, 0])
+        len_var_ord = len(var_ord.iloc[:, 0])
         len_data = len(datos)
-        #print(datos)
+
+        # print("\n=== Preparando datos para inserción ===")
+        # print(f"Longitud var_ord: {len_var_ord}")
+        # print(f"Longitud datos: {len_data}")
+        # print(f"Primeros datos: {datos[:5]}")
+
         if len_var_ord >= len_data:
             dif_len = len_var_ord + 1 - len_data
-            for i in range(0,dif_len):
+            for i in range(0, dif_len):
                 datos.append(None)
-        else: # when datos has more items than var_ord
+        else:  # when datos has more items than var_ord
             datos = datos[0:(len_var_ord+1)]
+
         # clean datos
-        for i in range(1,len_var_ord):
+        for i in range(1, len_var_ord):
             if datos[i] is not None:
-                #print("datos[i]",datos[i])
                 if str(datos[i]).replace(".", "").replace("-", "").replace("+", "").isnumeric() == False:
-                    #print("iter", i, "no es Digito", datos[i], pun_obs)
                     datos[i] = None
-        # print(".... ... ... .     ",qc_d)
+
+        # Crear diccionario asegurando que las claves sean strings
         if qc_d == 1:
             for d in range(1, len(var_ord.iloc[:, 0]), 2):
+                nemonico = str(var_ord.iloc[(d - 1), 0])  # Convertir a string
                 dic_nemo = {"sensor": "1", "valor": datos[d], "calidad": datos[d + 1]}
-                data_dic[var_ord.iloc[(d - 1), 0]] = [dic_nemo]
+                data_dic[nemonico] = [dic_nemo]
+                print(f"Procesando variable {nemonico}: {dic_nemo}")
+        
         if qc_d == 0:
             for d in range(1, len(var_ord.iloc[:, 0]), 1):
+                nemonico = str(var_ord.iloc[d, 0])  # Convertir a string
                 dic_nemo = {"sensor": "1", "valor": datos[d], "calidad": "55"}
-                data_dic[var_ord.iloc[d, 0]] = [dic_nemo]
+                data_dic[nemonico] = [dic_nemo]
+                print(f"Procesando variable {nemonico}: {dic_nemo}")
 
-        #print(data_dic)
         id_punto = str(cod_inamhi) + "_D1_STGO_R_" + fecha_dato.strftime("%Y-%m-%d_%H:%M:%S")
-        # print(id_punto, pun_obs)
         fecha_cre = datetime.now()
-        data_insert = {"_id": id_punto, "puntoObservacion": pun_obs, "estacion": int(cod_inamhi),
-                       "medioTransmision": "STGO",
-                       "fechaCreacionArchivo": fecha_cre, "fechaTomaDato": fecha_dato, "estado": -99,
-                       "data": data_dic}
-        
-        print(data_dic)
-        #print(data_insert)
+
+        data_insert = {
+            "_id": str(id_punto),
+            "puntoObservacion": str(pun_obs),
+            "estacion": int(cod_inamhi),
+            "medioTransmision": "STGO",
+            "fechaCreacionArchivo": fecha_cre,
+            "fechaTomaDato": fecha_dato,
+            "estado": -99,
+            "data": data_dic
+        }
+
+        # print("\n=== Documento a insertar ===")
+        # print(f"ID: {data_insert['_id']}")
+        # print(f"Punto Observación: {data_insert['puntoObservacion']}")
+        # print(f"Estación: {data_insert['estacion']}")
+        # print("Datos:")
+        # for key, value in data_insert['data'].items():
+        #     print(f"  {key}: {value}")
+        # print("===============================\n")
 
         return data_insert
 
@@ -372,59 +398,129 @@ class ProcessDownloadFile(object):
 
     # esta funcion le el excel descargado coteja la infromación con elcodigo INAMHI y lo ingresa a la base de datos
     def read_excel_data(self, file_data, file_config, path_backup):
-        data = pd.read_excel(file_data, engine="openpyxl")
-        # Cleaning excel replace extra characters and make Address to str
+
+        # Verificar que los archivos existen
+        if not os.path.exists(file_data):
+            print(f"ERROR: No se encuentra el archivo Excel: {file_data}")
+            return
+        if not os.path.exists(file_config):
+            print(f"ERROR: No se encuentra el archivo de configuración: {file_config}")
+            return
+
+        # print("\nLeyendo archivo de configuración...")
+        # Primero cargar las estaciones
+        self.stations = self.get_stations_file(file_config)
+        self.file_type = "METEOS" if "METEOS" in file_config else "HidroAlertas"
+
+        # print(f"\nTipo de archivo detectado: {self.file_type}")
+
+        # # Cargar Excel
+        # print("\nLeyendo archivo Excel...")
+        try:
+            data = pd.read_excel(file_data, engine="openpyxl")
+            # print(f"Excel cargado exitosamente. Total registros: {len(data)}")
+            # print("Columnas encontradas:")
+            print(data.columns.tolist())
+            
+            # Mostrar algunos registros del Excel original
+            # print("\nPrimeros registros del Excel original:")
+            print(data.head())
+            
+        except Exception as e:
+            print(f"Error al leer Excel: {str(e)}")
+            return
+
+        # Limpieza básica del Excel
         data = data.iloc[:, [0, 8, 17]]
         data['ADDRESS'] = data['ADDRESS'].replace("'", "")
         data['ADDRESS'] = data['ADDRESS'].astype(str)
-        self.stations = self.get_stations_file(file_config)
-        self.file_type = "HidroAlertas" if "HidroAlertas" in file_config else "METEOS"
         
-        # print(stations.head(4))
-        max_group = self.stations.iloc[:, 4].max()
-        min_group = self.stations.iloc[:, 4].min()
-        ### iter into group stations
-        # in each iter load group file configuration
-        for it in range(min_group, max_group + 1):
-            # print("--------- ",it," ---------------")
-            var_order = self.get_config_sta(it)
-            #print("read_excel_data: var order **** \n ", var_order)
-            # check if file of groups exist,
+        # print("\n=== COMPARACIÓN DE NESDIS ===")
+        # print("NESDIS en Excel:")
+        for addr in data['ADDRESS'].unique():
+            print(f"Excel NESDIS: {addr}")
+        
+        # print("\nNESDIS en archivo de configuración:")
+        for idx, row in self.stations.iterrows():
+            print(f"Config NESDIS: {row[0]} - Punto Obs: {row[2]}")
+        
+        # Procesar cada grupo
+        grupos = self.stations.iloc[:, 4].unique()
+        # print(f"\nGrupos encontrados: {grupos}")
+        
+        for grupo in grupos:
+            print(f"\n=== Procesando Grupo {grupo} ===")
+            var_order = self.get_config_sta(grupo)
+            
             if var_order is None:
-                print("no configuration file exist var_group"+str(it)+".csv ")
-            else:
-                stations_gr = self.stations[self.stations.iloc[:, 4] == it]
-                # print("grupo")
-                # print(len(stations_gr))
-                for row_it in range(0, len(stations_gr.iloc[:, 1])):
-                    self.row_index = row_it  # Inicializar self.row_index aquí
-                    nesdis = stations_gr.iloc[row_it, 0]
-                    cod_inamhi = stations_gr.iloc[row_it, 1]
-                    pun_obs = stations_gr.iloc[row_it, 2]
-                    fila = data[data['ADDRESS'] == nesdis]
-                    transmission_state = 6
-                    msg_type = int(stations_gr.iloc[row_it, 6])  ## if the mesage is in pseudobinari format
-                    qc_d = int(stations_gr.iloc[row_it, 7])
-                    if len(fila) > 0:  # if nesdis exist into excel file
-                        datos = fila.iloc[0, 2]
-                        date_file = fila['CAR TIME']
-                        if msg_type == 0 or msg_type == 2:
-                            datos = datos.replace('b', '')
-                            datos = datos.replace(" ", "").replace('`', '').replace('"', '')
-                            datos = datos.rsplit(',')
-                        else: # form message type 1 psudobinary
-                            datos = datos.split(' ')
-                        error_time = datetime.strptime(fila.iloc[0, 1], "%m/%d/%Y %H:%M:%S.%f")  # Car Time
-                        if datos[0].replace(".", "").replace("-", "").isnumeric() or datos[0].startswith('@'):
-                            transmission_state = 5
-                            print(f"Inserting in PostgreSQL: {date_file}")
-
+                # print(f"No hay archivo de configuración para grupo {grupo}, continuando con siguiente grupo")
+                continue
+                
+            # Obtener estaciones del grupo actual
+            stations_gr = self.stations[self.stations.iloc[:, 4] == grupo]
+            # print(f"Número de estaciones en grupo {grupo}: {len(stations_gr)}")
+            
+            # Procesar cada estación del grupo
+            for row_it in range(0, len(stations_gr.iloc[:, 1])):
+                self.row_index = row_it
+                nesdis = stations_gr.iloc[row_it, 0]
+                cod_inamhi = stations_gr.iloc[row_it, 1]
+                pun_obs = stations_gr.iloc[row_it, 2]
+                msg_type = int(stations_gr.iloc[row_it, 6])
+                qc_d = int(stations_gr.iloc[row_it, 7])
+                
+                # print(f"\nProcesando estación:")
+                # print(f"NESDIS: {nesdis}")
+                # print(f"Punto Observación: {pun_obs}")
+                # print(f"COD_INAMHI: {cod_inamhi}")
+                # print(f"Tipo mensaje: {msg_type}")
+                # print(f"QC_D: {qc_d}")
+                
+                # Buscar mensaje en el Excel
+                fila = data[data['ADDRESS'] == nesdis]
+                transmission_state = 6
+                
+                if len(fila) > 0:
+                    # print(f"✓ Encontrado mensaje para estación {pun_obs}")
+                    datos = fila.iloc[0, 2]
+                    date_file = fila['CAR TIME']
+                    
+                    if msg_type == 0 or msg_type == 2:
+                        datos = datos.replace('b', '')
+                        datos = datos.replace(" ", "").replace('`', '').replace('"', '')
+                        datos = datos.rsplit(',')
+                    else:  # msg_type == 1
+                        datos = datos.split(' ')
+                    
+                    # print(f"Datos procesados: {datos[:5]}...")  # Mostrar primeros 5 elementos
+                    
+                    error_time = datetime.strptime(fila.iloc[0, 1], "%m/%d/%Y %H:%M:%S.%f")  # Car Time
+                    
+                    if datos[0].replace(".", "").replace("-", "").isnumeric() or datos[0].startswith('@'):
+                        transmission_state = 5
+                        # print(f"Encontrado mensaje válido para {pun_obs}")
+                        try:
                             self.insert_data(datos, var_order, nesdis, cod_inamhi, pun_obs, msg_type, date_file, qc_d)
-                        else:
-                            ## con fallas trasnmite pero el mensaje continen errores
+                            # print(f"✓ Datos insertados correctamente para {pun_obs}")
+                        except Exception as e:
+                            # print(f"✗ Error al insertar datos para {pun_obs}: {str(e)}")
                             transmission_state = 4
-                            print("El mensaje tienen errores;", nesdis, ";id_est;", str(cod_inamhi), ";cod_inamhi;",
-                                pun_obs, error_time)
+                    else:
+                        transmission_state = 4
+                        print(f"Mensaje con errores para {pun_obs} en tiempo {error_time}")
+                else:
+                    print(f"✗ No se encontró mensaje para estación {pun_obs}")
+                
+                # # Actualizar estado de transmisión
+                # try:
+                #     # self.set_station_state(id_station=cod_inamhi, new_state=transmission_state)
+                #     # print(f"Estado de transmisión actualizado para {pun_obs}: {transmission_state}")
+                # except Exception as e:
+                #     # print(f"Error al actualizar estado de transmisión para {pun_obs}: {str(e)}")
+
+        #     print(f"\nCompletado procesamiento del grupo {grupo}")
+        
+        # print("\n=== FIN PROCESAMIENTO ===")
 
                         # transforma el campo de la fecha a fecha
                     # ********
@@ -433,23 +529,19 @@ class ProcessDownloadFile(object):
                     # self.set_station_state(id_station=cod_inamhi, new_state=transmission_state)
                 # print(data.head(5))
                 
-    def get_id_estacion(self,stations_data, file_type, row_index):
-        """
-        Obtiene el id_estacion basado en el tipo de archivo y el índice de fila.
-        """
-        if file_type == "HidroAlertas":
-            return stations_data.iloc[row_index, 1]
-        elif file_type == "METEOS":
-            return stations_data.iloc[row_index, 8]
-        else:
-            return None
+    def get_station_id(self, stations_data, pun_obs):
+        """Obtiene el ID correcto de la estación"""
+        # Buscar en la columna 2 que contiene los códigos tipo M0001
+        estacion_info = stations_data[stations_data[2] == pun_obs]
+        return None if estacion_info.empty else estacion_info.iloc[0][8]  # El ID está en la columna 8
+
 
     def check_existing_record(self,cur, tabla, fecha_toma_dato, id_estacion):
         """
         Verifica si ya existe un registro para la fecha y estación dadas.
         """
         query = f"""
-        SELECT COUNT(*) FROM automaticas._{tabla}
+        SELECT COUNT(*) FROM _{tabla}
         WHERE fecha_toma_dato = %s AND id_estacion = %s
         """
         cur.execute(query, (fecha_toma_dato, id_estacion))
@@ -461,76 +553,97 @@ class ProcessDownloadFile(object):
             conn = psycopg2.connect(**params)
             cur = conn.cursor()
 
-            # Obtener id_estacion
-            id_estacion = self.get_id_estacion(stations_data, file_type, row_index)
-            if id_estacion is None:
-                print(f"No se pudo obtener id_estacion para el índice {row_index} en {file_type}")
-                return
+            estacion = pun_obs
+            id_estacion = self.get_station_id(stations_data, pun_obs)
 
-            # Convertir id_estacion a int estándar de Python si es numpy.int64
-            if isinstance(id_estacion, np.integer):
-                id_estacion = int(id_estacion)
+            print(f"\n=== PROCESANDO DATOS PARA INSERCIÓN ===")
+            print(f"Estación: {estacion}")
+            print(f"ID Estación: {id_estacion}")
 
-            # Obtener fecha_toma_dato
+            # Obtener fecha según tipo de mensaje
             if msg_type == 0:
                 fecha_toma_dato = self.text_to_date(datos[0])
             elif msg_type == 1:
-                fecha_toma_dato = self.text_to_date(date_file.iloc[0])
-            else:
+                curr_date = datetime.strptime(date_file.iloc[0], "%m/%d/%Y %H:%M:%S.%f")
+                fecha_toma_dato = curr_date.replace(minute=0)
+                dec = Msg_Met_Decoder()
+                array_decode = dec.decomMesage(datos[0], var_ord.iloc[:, 3], var_ord.iloc[:, 4])
+                datos = array_decode
+            elif msg_type == 2:
                 fecha_toma_dato = self.text_to_date(datos[0] + " " + datos[1])
-            
-            if fecha_toma_dato is None:
-                print(f"Error: No se pudo convertir la fecha {datos[0]}")
 
             fecha_ingreso = datetime.now()
 
+            # Crear mapeo de índices para msg_type 1
+            orden_a_indice = {}
+            indice_actual = 0
+            for index, row in var_ord.iterrows():
+                if pd.notna(row['nemonico2']):
+                    orden_actual = int(row['orden'])
+                    orden_a_indice[orden_actual] = indice_actual
+                    indice_actual += 1
+
+            print(f"Fecha toma dato: {fecha_toma_dato}")
+            print(f"Tipo mensaje: {msg_type}")
+            if msg_type == 1:
+                print(f"Datos decodificados: {datos}")
+
+            # Procesar cada variable
             for index, row in var_ord.iterrows():
                 if pd.notna(row['nemonico2']):
                     tabla = row['nemonico2']
-                    orden = int(row['orden'])  # Convertir a int estándar
-                    decimales = int(row['decimales'])  # Convertir a int estándar
+                    orden = int(row['orden'])
+                    decimales = int(row['decimales'])
 
-                    # Verificar si la tabla existe
-                    cur.execute(f"SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '_{tabla}')")
-                    table_exists = cur.fetchone()[0]
-
-                    if not table_exists:
-                        print(f"La tabla _{tabla} no existe.")
-                        continue
-
-                    # Verificar si el registro ya existe
+                    # Usar la función check_existing_record para verificar si el registro existe
                     if self.check_existing_record(cur, tabla, fecha_toma_dato, id_estacion):
                         print(f"Registro ya existe en _{tabla} para fecha {fecha_toma_dato} y estación {id_estacion}")
                         continue
 
-                    # Obtener y procesar el valor
-                    if msg_type == 1:
-                        dec = Msg_Met_Decoder()
-                        valor = dec.decomMesage(datos[0], [decimales], [int(row['caracteres'])])[0]
+                    # Obtener valor según tipo de mensaje
+                    if msg_type == 0:
+                        valor = datos[orden] if orden < len(datos) else None
+                    elif msg_type == 1:
+                        indice_array = orden_a_indice[orden]
+                        valor = datos[indice_array] if indice_array < len(datos) else None
+                    elif msg_type == 2:
+                        valor = datos[orden] if orden < len(datos) else None
                     else:
                         valor = datos[orden] if orden < len(datos) else None
 
                     if valor is not None:
                         if isinstance(valor, np.generic):
-                            valor = valor.item()  # Convertir tipos numpy a tipos Python estándar
+                            valor = valor.item()
                         if str(valor).replace(".", "").replace("-", "").replace("+", "").isnumeric():
-                            valor = float(valor) / (10 ** decimales)
-                        else:
-                            valor = None
-                    print(f"Inserting in PostgreSQL: {fecha_toma_dato}")
+                            # Aplicar redondeo según decimales
+                            factor = 10 ** decimales
+                            valor_redondeado = float(valor) / factor
 
-                    # Insertar el dato
-                    query = f"""
-                    INSERT INTO automaticas._{tabla} (fecha_toma_dato, fecha_ingreso, "1h", id_estacion, id_usuario, id_estado_proceso)
-                    VALUES (%s, %s, %s, %s, 0, 19)
-                    """
-                    cur.execute(query, (fecha_toma_dato, fecha_ingreso, valor, id_estacion))
+                            query = f"""
+                            INSERT INTO _{tabla} (
+                                id_usuario, id_estacion, estacion, fecha_toma_dato, 
+                                fecha_ingreso, valor, instrumento, nivel_calidad, 
+                                estado_calidad, frecuencia_trans
+                            )
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            """
+                            print(f"Insertando en _{tabla}: estación {estacion}, valor {valor_redondeado}")
+                            
+                            try:
+                                cur.execute(query, (
+                                    0, id_estacion, estacion, fecha_toma_dato, 
+                                    fecha_ingreso, valor_redondeado, None, 0, 4, 4
+                                ))
+                                conn.commit()
+                                print(f"✓ Insertado correctamente en _{tabla}")
+                            except Exception as e:
+                                print(f"✗ Error insertando en _{tabla}: {str(e)}")
+                                conn.rollback()
 
-            conn.commit()
-            print(f"Datos insertados correctamente para la estación {id_estacion}")
+            print(f"\nProcesamiento completado para estación {estacion}")
 
         except (Exception, psycopg2.Error) as error:
-            print(f"Error al insertar datos en PostgreSQL: {error}")
+            print(f"Error PostgreSQL: {error}")
             if conn:
                 conn.rollback()
         finally:
@@ -540,7 +653,9 @@ class ProcessDownloadFile(object):
                 conn.close()
 
 
-#
+
+
+        #
 #
 if __name__ == '__main__':
     proc = ProcessDownloadFile()
