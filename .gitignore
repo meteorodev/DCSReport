@@ -13,3 +13,4 @@
 /fromFirefox/__pycache__
 /process/__pycache__
 /utils/__pycache__
+*.log
