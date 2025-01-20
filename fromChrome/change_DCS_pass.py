@@ -20,9 +20,9 @@ class ManageDCS:
     def check_day(self, url):
         """
             Args:
-                 ():
+                url (String ): main url from the scraping
             Raises:
-                :
+                : No Raises
             Returns:
                 :
         """
@@ -43,12 +43,13 @@ class ManageDCS:
     def scrapping_change_pass(self,url):
         """ This function changes password in the dcs platforms using scraping over the web
             Args:
-                 ():
+                url (String ): main url from the scraping
             Raises:
-                :
+                TimeoutException : when page no load
             Returns:
-                :
-        """
+               200 int : if password was changed
+               None : If any error occurred
+         """
         dcs_scrap = DcsChromeReport()
         drr = dcs_scrap.init_chrome_driver()
         drr.get(url)
@@ -81,7 +82,7 @@ class ManageDCS:
                 lb_pass_rep.send_keys(n_pass)
                     ## save button
                 save_btn = drr.find_element(By.XPATH,"/html/body/div[3]/div[2]/div/div[1]/button[1]")
-                    #save_btn = drr.find_element(By.XPATH,"/html/body/div[3]/div[2]/div/div[1]/button[2]")
+                #save_btn = drr.find_element(By.XPATH,"/html/body/div[3]/div[2]/div/div[1]/button[2]")
                 save_btn.click()
                     #### here save new pass in config file
                 conf.set_cred(section="dcsweb", key="password", value=n_pass)
