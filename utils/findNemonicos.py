@@ -14,7 +14,8 @@ import pandas as pd
 class NemonicoChecker():
     
     def __init__(self):
-        self.mainpath = "/home/darwin/Documentos/Desarrollo/Python/DCSReport"
+        #self.mainpath = "/home/darwin/Documentos/Desarrollo/Python/DCSReport"
+        self.mainpath = "/media/Datos/Desarrollo/PythonProyects/DCSReport/"
 
     def getListestation(self):
         print("inicio")
@@ -36,8 +37,10 @@ class NemonicoChecker():
             Returns:
                 :
         """
+
         # Ruta del directorio donde se encuentran los archivos
-        directorio = '/home/darwin/Documentos/Desarrollo/Python/DCSReport'
+        #directorio = '/home/darwin/Documentos/Desarrollo/Python/DCSReport'
+        directorio = '/media/Datos/Desarrollo/PythonProyects/DCSReport/'
         # Lista para almacenar los DataFrames
         dataframes = []
         # Iterar sobre los archivos en el directorio
@@ -54,6 +57,7 @@ class NemonicoChecker():
         nemonicos = df_combinado['nemonico2']
         # Mostrar el DataFrame combinado (opcional)
         print(df_combinado)
+        return nemonicos
 
     def getstfromDB(self, stationlist):
         query=f"""
@@ -65,10 +69,45 @@ class NemonicoChecker():
             and cpt.id_captor = cp.id_captor and e.id_punto_obs = c.id_punto_obs
             and  p.codigo in {stationlist} and cp.nombre = 'ELECTROMECANICA' order by p.codigo;
         """
+        print("getstFromDB")
         conn = None
         try:
             params = conf.get_cred(fileconf='../config.ini',section="bandamhHist")
             print('Connecting to the PostgreSQL database bandamhHist...')
+            conn = psycopg2.connect(**params)
+            cur = conn.cursor()
+            cur.execute(query)
+            colnames = [desc[0] for desc in cur.description]
+            rows = cur.fetchall()
+            if rows:
+                df = pd.DataFrame(rows, columns=colnames)
+                return df
+
+            cur.close()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+        finally:
+            if conn is not None:
+                conn.close()
+                print('Database connection closed.')
+
+    def rtTables(self):
+        """ return dataframe with all tablets of realtime db to compare with nemonicos
+        Args:
+            no args
+        Raises:
+            RuntimeError:
+        Returns:
+            dataframe : list tables with nemonicos names
+        """
+        query = f"""
+                    SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' 
+                    AND table_type = 'BASE TABLE';
+                """
+        conn = None
+        try:
+            params = conf.get_cred(fileconf='../config.ini', section="bandahmtime")
+            print('Connecting to the PostgreSQL database bandamhreal time..')
             conn = psycopg2.connect(**params)
             cur = conn.cursor()
             cur.execute(query)
@@ -102,9 +141,25 @@ class NemonicoChecker():
         #### check id_estacion
         margedf=pd.merge(df1,df2,on='codigo',suffixes=('_nl','_db'))
         dif = margedf[margedf['id_estacion_nl'] != margedf['id_estacion_db']]
-        st.iloc[:,2]
+        return margedf
 
-
+    def compareNemonicos(self):
+        nemo = nm.getListNemonicos()
+        tablas = nm.rtTables()
+        # limpiamos el dataframe de nemonicos quitando lso repetidos
+        cl_nemos = nemo.drop_duplicates()
+        cl_nemos = cl_nemos.dropna()
+        ####
+        print("control")
+        # Filtro usando regex
+        cl_tablas = tablas[tablas['table_name'].str.match(r"^_\d{9}[A-Za-z]$", na=False)]
+        cl_tablas = cl_tablas['table_name'].str.lstrip('_')
+        cl_nemos.columns = ["table_name"]
+        # Filtrar los valores que están en s1 pero NO en s2
+        s_diff = cl_nemos[~cl_nemos.isin(cl_tablas)]
+        ####  tablas faltantes
+        # 01807011m, 007060101h, 013130101h, 017140805m, 022203201h, 017140805h
+        return s_diff
 
 if __name__ == '__main__':
     nm = NemonicoChecker()
@@ -112,4 +167,6 @@ if __name__ == '__main__':
     #nm.test_postgres_conn(section='postgresql2')
     #nm.getListestation()
     nm.compareIdSt()
-    nm.getListNemonicos()
+    # nemo = nm.getListNemonicos()
+    # tablas = nm.rtTables()
+    nm.compareNemonicos()
